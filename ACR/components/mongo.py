@@ -50,7 +50,7 @@ class Mongo(Component):
 	def update(self,acenv,config):
 		D=acenv.doDebug
 		params=config["params"]
-		coll=acenv.app.storage[params.get("coll",self.DEFAULT_COLL)]
+		coll=config["params"]["coll"]
 		where=params["where"].execute(acenv)
 		o=config["content"].execute(acenv)
 		if D:
@@ -68,7 +68,7 @@ class Mongo(Component):
 	def insert(self,acenv,config):
 		D=acenv.doDebug
 		params=config["params"]
-		coll=acenv.app.storage[params.get("coll",self.DEFAULT_COLL)]
+		coll=config["params"]["coll"]
 		o=config["content"].execute(acenv)
 		if D: acenv.debug("doing %s",coll.insert)
 		try:
@@ -88,7 +88,7 @@ class Mongo(Component):
 		D=acenv.doDebug
 		if D: acenv.debug("START Mongo.save with: %s", config)
 		params=config["params"]
-		coll=acenv.app.storage[params.get("coll",self.DEFAULT_COLL)]
+		coll=config["params"]["coll"]
 		o=config["content"].execute(acenv)
 		if D: acenv.debug("doing %s",coll.insert)
 		id=coll.save(o,safe=True)
@@ -101,7 +101,7 @@ class Mongo(Component):
 		D=acenv.doDebug
 		if D: acenv.debug("START Mongo.remove with: %s", config)
 		params=config["params"]
-		coll=acenv.app.storage[params.get("coll",self.DEFAULT_COLL)]
+		coll=config["params"]["coll"]
 		o=config["content"].execute(acenv)
 		if D: acenv.debug("doing %s",coll.insert)
 		if o:
@@ -119,6 +119,7 @@ class Mongo(Component):
 	def removeAll(self,acenv,config):
 		D=acenv.doDebug
 		if D: acenv.debug("START Mongo.removeAll with: %s", config)
+		coll=config["params"]["coll"]
 		lastError=coll.remove({},safe=True)
 		if D and not lastError:acenv.debug("removed:\n%s",o)
 		#leaving space for debugging and profiling info
@@ -134,7 +135,7 @@ class Mongo(Component):
 		D=acenv.doDebug
 		P=acenv.doProfiling
 		params=config["params"]
-		coll=acenv.app.storage[params.get("coll",self.DEFAULT_COLL)]
+		coll=params["coll"]
 		p={
 			"spec":params.get("where", config["content"]).execute(acenv)
 		}
@@ -199,16 +200,22 @@ class Mongo(Component):
 			return []
 #			return {"@status":"noData"}
 
-	def generate(self, acenv,config):
+	def getColls(self, acenv, config):
+		return acenv.app.storage.collection_names()
+
+	def generate(self, acenv, config):
 		D=acenv.doDebug
 		if D: acenv.debug("START Mongo:%s with %s",config["command"].split(":").pop(), config)
 		db=acenv.app.storage
-		params=config["params"]
-		collName=params.get("coll",self.DEFAULT_COLL)
-		if type(collName) in (str,unicode):
-			coll=acenv.app.storage[params.get("coll",self.DEFAULT_COLL)]
-		coll=dicttree.get(acenv.app.storage,params.get("coll",self.DEFAULT_COLL))
-		return self.__getattribute__(config["command"].split(":").pop())(acenv,config)
+		cfg=config.copy()
+		params=cfg["params"].copy()
+		try:
+			collName=params["coll"].execute(acenv)
+			params["coll"]=acenv.app.storage[collName]
+			cfg["params"]=params
+		except KeyError:
+			pass
+		return self.__getattribute__(config["command"].split(":").pop())(acenv, cfg)
 
 	def parseAction(self,config):
 		s=[]
@@ -235,12 +242,12 @@ class Mongo(Component):
 		except KeyError:
 			pass
 		try:
-			coll=pars["coll"].split(".")
-			if len(coll) is 1:
-				coll=coll[0]
+			coll=makeTree(pars["coll"])#.split(".")
+
 			pars["coll"]=coll
 		except KeyError:
-			raise Error("no coll parameter specified")
+			if config["command"] !="getColls":
+				raise Error("no coll parameter specified")
 		try:
 			sort=pars["sort"].split(",")
 			directions=pars.get("direction",self.DIRECTION).split(",")
@@ -252,11 +259,10 @@ class Mongo(Component):
 				pars["sort"]=list(itertools.izip_longest(sort,directions,fillvalue=directions[-1]))
 		except:
 			pass
-		# if fields:
-		# 	pars["fields"]=show or hide
+
 		return {
 			"command":config["command"],
-			"content":makeTree("".join(s)),
+			"content":makeTree("".join(s) or {}),
 			"params":pars
 		}
 
