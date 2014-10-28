@@ -161,18 +161,20 @@ class Mongo(Component):
 		if P: t=time.time()
 		if count:
 			ret=coll.find(**p).count()
-			if D:acenv.debug("Objects matching count is: %s",ret)
+			if D:acenv.debug("Matching documents number: %s",ret)
 		elif one:
 			ret=list(coll.find(**p).limit(-1))
 			ret=ret and ret[0] or None
+			if ret:
+				ret["_id"]=str(ret["_id"])
 		else:
 			ret=list(coll.find(**p))
 			if ret and params.has_key("sort") and len(params["sort"]) is 1:
 				sortBy=params['sort'][0][0]
 				if ret[0].has_key(sortBy)\
-				and type(ret[0][sortBy]) in STR_TYPES\
-				or ret[-1].has_key(sortBy)\
-				and type(ret[-1][sortBy]) in STR_TYPES:
+					and type(ret[0][sortBy]) in STR_TYPES\
+					or ret[-1].has_key(sortBy)\
+					and type(ret[-1][sortBy]) in STR_TYPES:
 					if D:acenv.debug("Doing additional Python sort")
 					def sortedKey(k):
 						try:
@@ -183,21 +185,21 @@ class Mongo(Component):
 					if params['sort'][0][1] is pymongo.DESCENDING:
 						pars["reverse"]=True
 					ret=sorted(ret, **pars)
+
 		if P:
 			acenv.profiler["dbtimer"]+=time.time()-t
 			acenv.profiler["dbcounter"]+=1
-		if ret:
-			#if len(ret) is 1:
-			#	if D:acenv.debug("END Mongo.find with %s",ret[0])
-			#	return ret[0]
+		if type(ret) is list:
+			for i in ret:
+				i["_id"]=str(i["_id"])
 			if D:acenv.debug("END Mongo.find with %s",ret)
-			return ret
+			return ret #[e.set("_id", str(e["_id"])) and e for e in ret]
 		else:
 			if count:
 				if D:acenv.debug("END Mongo.count with 0")
 				return ret
-			if D:acenv.debug("END Mongo.find with no object")
-			return []
+			if D:acenv.debug("END Mongo.find with one or no object")
+			return ret
 #			return {"@status":"noData"}
 
 	def getColls(self, acenv, config):
