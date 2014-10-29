@@ -94,12 +94,12 @@ class Application(object):
 		host=config.get("/mongo[@host]")
 		if host:
 			connopts["host"]=host
-		if str2obj(config.get("/deployment[@enable]","f")):
-			self.deploymentMode=True
 		try:
 			self.storage=pymongo.Connection(**connopts)[self.DB_NAME]
 		except Exception,e:
 			raise Error("MongoError",str(e))
+		if str2obj(config.get("/deployment[@enable]","f")):
+			self.deploymentMode=True
 		if acconfig.debug or config.get("/debug"):
 			self.dbg={
 				"enabled": acconfig.debug or str2obj(config.get("/debug[@enable]")),

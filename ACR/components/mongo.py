@@ -189,9 +189,12 @@ class Mongo(Component):
 		if P:
 			acenv.profiler["dbtimer"]+=time.time()-t
 			acenv.profiler["dbcounter"]+=1
-		if type(ret) is list:
+		if ret and type(ret) is list:
 			for i in ret:
-				i["_id"]=str(i["_id"])
+				try:
+					i["_id"]=str(i["_id"])
+				except KeyError:
+					pass
 			if D:acenv.debug("END Mongo.find with %s",ret)
 			return ret #[e.set("_id", str(e["_id"])) and e for e in ret]
 		else:
@@ -214,9 +217,9 @@ class Mongo(Component):
 		try:
 			collName=params["coll"].execute(acenv)
 			params["coll"]=acenv.app.storage[collName]
-			cfg["params"]=params
 		except KeyError:
 			pass
+		cfg["params"]=params
 		return self.__getattribute__(config["command"].split(":").pop())(acenv, cfg)
 
 	def parseAction(self,config):

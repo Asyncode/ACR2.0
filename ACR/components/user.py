@@ -53,6 +53,7 @@ class User(Component):
 		D=acenv.doDebug
 		email=replaceVars(acenv,conf["email"]).lower()
 		usersColl=acenv.app.storage.users
+
 		try:
 			user=list(usersColl.find({
 				"email":email,
