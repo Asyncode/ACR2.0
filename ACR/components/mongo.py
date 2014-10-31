@@ -28,7 +28,7 @@ from ACR.components import *
 from ACR.utils.xmlextras import tree2xml
 from xml.sax.saxutils import escape,unescape
 import pymongo
-from bson import objectid
+from bson import objectid, errors
 from ACR.utils.interpreter import makeTree
 import time
 
@@ -51,8 +51,8 @@ class Mongo(Component):
 		D=acenv.doDebug
 		params=config["params"]
 		coll=config["params"]["coll"]
-		where=params["where"].execute(acenv)
-		o=config["content"].execute(acenv)
+		where=params["where"]
+		o=config["spec"]
 		if D:
 			acenv.debug("where clause is %s",where)
 			acenv.debug("update object is %s",o)
@@ -69,7 +69,7 @@ class Mongo(Component):
 		D=acenv.doDebug
 		params=config["params"]
 		coll=config["params"]["coll"]
-		o=config["content"].execute(acenv)
+		o=config["spec"]
 		if D: acenv.debug("doing %s",coll.insert)
 		try:
 			id=coll.insert(o,safe=True)
@@ -89,7 +89,7 @@ class Mongo(Component):
 		if D: acenv.debug("START Mongo.save with: %s", config)
 		params=config["params"]
 		coll=config["params"]["coll"]
-		o=config["content"].execute(acenv)
+		o=config["spec"]
 		if D: acenv.debug("doing %s",coll.insert)
 		id=coll.save(o,safe=True)
 		if D:acenv.debug("saved:\n%s",o)
@@ -102,7 +102,7 @@ class Mongo(Component):
 		if D: acenv.debug("START Mongo.remove with: %s", config)
 		params=config["params"]
 		coll=config["params"]["coll"]
-		o=config["content"].execute(acenv)
+		o=config["spec"]
 		if D: acenv.debug("doing %s",coll.insert)
 		if o:
 			lastError=coll.remove(o,safe=True)
@@ -114,7 +114,7 @@ class Mongo(Component):
 			}
 		if D and not lastError:acenv.debug("removed:\n%s",o)
 		#leaving space for debugging and profiling info
-		return lastError or {"status":"ok"}
+		return lastError or {"@status":"ok"}
 
 	def removeAll(self,acenv,config):
 		D=acenv.doDebug
@@ -122,8 +122,8 @@ class Mongo(Component):
 		coll=config["params"]["coll"]
 		lastError=coll.remove({},safe=True)
 		if D and not lastError:acenv.debug("removed:\n%s",o)
-		#leaving space for debugging and profiling info
-		return lastError or {"status":"ok"}
+		# leaving space for debugging and profiling info
+		return lastError or {"@status":"ok"}
 
 	def count(self,acenv,config):
 		return self.find(acenv,config,count=True)
@@ -137,7 +137,7 @@ class Mongo(Component):
 		params=config["params"]
 		coll=params["coll"]
 		p={
-			"spec":params.get("where", config["content"]).execute(acenv)
+			"spec":params["spec"]
 		}
 		if D:acenv.debug("Finding objects matching:\n%s",p["spec"])
 		for i in params:
@@ -146,7 +146,8 @@ class Mongo(Component):
 				params[i]=replaceVars(acenv,params[i])
 		try:
 			p["fields"]=params["fields"]
-		except: pass
+		except:
+			pass
 		if not one:
 			try:
 				p["skip"]=int(params["skip"])
@@ -203,7 +204,6 @@ class Mongo(Component):
 				return ret
 			if D:acenv.debug("END Mongo.find with one or no object")
 			return ret
-#			return {"@status":"noData"}
 
 	def getColls(self, acenv, config):
 		return acenv.app.storage.collection_names()
@@ -219,6 +219,22 @@ class Mongo(Component):
 			params["coll"]=acenv.app.storage[collName]
 		except KeyError:
 			pass
+		try:
+			where=params["where"].execute(acenv)
+			params["where"]["_id"]=objectid.ObjectId(where["_id"])
+		except (errors.InvalidId, KeyError):
+			# we are dealing with customized or no _id property
+			pass
+		except :
+			# there is no "where"
+			pass
+		spec=config["content"].execute(acenv)
+		try:
+			spec["_id"]=objectid.ObjectId(spec["_id"])
+		except (errors.InvalidId, KeyError):
+			# we are dealing with customized or no _id property
+			pass
+		params["spec"]=spec
 		cfg["params"]=params
 		return self.__getattribute__(config["command"].split(":").pop())(acenv, cfg)
 
