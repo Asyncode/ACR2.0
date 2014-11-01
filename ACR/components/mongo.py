@@ -47,22 +47,26 @@ class Mongo(Component):
 		#self.DEFAULT_DB=config.get("defaultdb")
 		self.DEFAULT_COLL=config.get("defaultcoll")
 
-	def update(self,acenv,config):
+	def replace(self,acenv,config):
+		return self.update(acenv,config,replace=False)
+
+	def update(self,acenv,config, replace=True):
 		D=acenv.doDebug
 		params=config["params"]
-		coll=config["params"]["coll"]
+		coll=params["coll"]
 		where=params["where"]
-		o=config["spec"]
+		o=params["spec"]
 		if D:
 			acenv.debug("where clause is %s",where)
 			acenv.debug("update object is %s",o)
 		try:
-			return coll.update(where,o,safe=True,multi=True)
-		except pymongo.errors.OperationFailure,e:
+			# multi=True throws
+			return coll.update(where, o, safe=True, multi=replace)
+		except pymongo.errors.OperationFailure, e:
 			return {
-				"status":"error",
-				"error":"NotUpdated",
-				"message":str(e)
+				"@status": "error",
+				"@error": "NotUpdated",
+				"@message": str(e)
 			}
 
 	def insert(self,acenv,config):
@@ -142,7 +146,7 @@ class Mongo(Component):
 		if D:acenv.debug("Finding objects matching:\n%s",p["spec"])
 		for i in params:
 			#FIXME lame exception
-			if type(params[i]) is list and i!='sort':
+			if type(params[i]) is list and i not in ['sort','spec']:
 				params[i]=replaceVars(acenv,params[i])
 		try:
 			p["fields"]=params["fields"]
@@ -210,7 +214,7 @@ class Mongo(Component):
 
 	def generate(self, acenv, config):
 		D=acenv.doDebug
-		if D: acenv.debug("START Mongo:%s with %s",config["command"].split(":").pop(), config)
+		if D: acenv.debug("START Mongo: %s with %s", config["command"].split(":").pop(), config)
 		db=acenv.app.storage
 		cfg=config.copy()
 		params=cfg["params"].copy()
@@ -221,12 +225,10 @@ class Mongo(Component):
 			pass
 		try:
 			where=params["where"].execute(acenv)
-			params["where"]["_id"]=objectid.ObjectId(where["_id"])
+			where["_id"]=objectid.ObjectId(where["_id"])
+			params["where"]=where
 		except (errors.InvalidId, KeyError):
 			# we are dealing with customized or no _id property
-			pass
-		except :
-			# there is no "where"
 			pass
 		spec=config["content"].execute(acenv)
 		try:

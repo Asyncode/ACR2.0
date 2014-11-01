@@ -55,5 +55,9 @@ class AppError(Err):
 class TerminatingError(Err):
 	pass
 
-class ViewNotFound(Exception):
-	pass
+class ViewNotFound(Err):
+	def __init__(self, msg=""):
+		if type(msg) is not str:
+			raise Exception("Message must be string, but is: %s"%type(msg))
+		self.message=msg
+		self.name="ViewNotFound"

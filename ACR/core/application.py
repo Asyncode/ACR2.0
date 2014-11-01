@@ -175,6 +175,7 @@ class Application(object):
 				break
 			viewPath=temp
 			viewName.append(inputs.pop(0))
+
 		if inputs and pexists(pjoin(viewPath,inputs[0])+".xml"):
 			viewName.append(inputs.pop(0))
 		elif not inputs and pexists(viewPath+".xml"):
@@ -182,9 +183,10 @@ class Application(object):
 		elif not inputs and pexists(pjoin(viewPath,"default.xml")):
 			viewName.append("default")
 		else:
-			if errorOnNotFound:
-				raise ViewNotFound(viewName)
-			viewName=["notFound"]
+			# if errorOnNotFound:
+				raise ViewNotFound(" API resource not found. "+"/".join(pjoin(inputs))+ "file doesn't exist.")
+			# viewName=["notFound"]
+
 		v=View(viewName, self)
 		dicttree.set(self.views, viewName, v)
 		return (v, inputs)
@@ -207,7 +209,12 @@ class Application(object):
 			if D: acenv.debug("Inputs are '%s'",acenv.inputs)
 			view, acenv.inputs=self.getView(acenv.URLpath)
 			view.generate(acenv)
-		except Error,e:
+		# except Error,e:
+		# 	acenv.generations["GlobalError"]={
+		# 		"error":e.name,
+		# 		"message":str(e)
+		# 	}
+		except (Error,ViewNotFound),e:
 			acenv.generations["GlobalError"]={
 				"error":e.name,
 				"message":str(e)

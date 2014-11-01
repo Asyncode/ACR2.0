@@ -86,6 +86,8 @@ def application(env,start_response):
 	status='200 OK'
 	if acenv.doRedirect:
 		status="303 See other"
+	elif "GlobalError" in acenv.generations:
+		status="500 Internal Server Error"
 	start_response(status, headers)
 	if acenv.doRedirect:
 		response.append("")
