@@ -88,7 +88,7 @@ class FileSystem(Component):
 				#TODO change type to mimetype
 				f={
 					"name":i,
-					"path":path,
+					"path":path.replace("/","|"),
 					"type":"file"
 				}
 				if showMIME:
