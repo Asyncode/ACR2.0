@@ -184,7 +184,7 @@ class Application(object):
 			viewName.append("default")
 		else:
 			# if errorOnNotFound:
-				raise ViewNotFound(" API resource not found. "+"/".join(pjoin(inputs))+ "file doesn't exist.")
+				raise ViewNotFound(" API resource not found. "+"/".join(pjoin(inputs))+ " file doesn't exist.")
 			# viewName=["notFound"]
 
 		v=View(viewName, self)

@@ -198,7 +198,7 @@ class View(object):
 		if ns:
 			for attr in attrs:
 				if attr.startswith(ns+":") and not attr==ns+cmd:
-					params[attr.rsplit(":",1)[1]]=prepareVars(action[1][attr])
+					params[attr.rsplit(":",1)[1]]=action[1][attr]
 		ret={
 			"command":cmd,
 			"params":params,

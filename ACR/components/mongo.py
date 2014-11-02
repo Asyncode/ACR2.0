@@ -23,7 +23,7 @@ TODO:
 - make component work also with one database using subcollections eg. rather than using db.database.collection, using db.oneDB.rootColl,collection. It saves space and the security layer is here so we don't need to rely on Mongo's own approach to users.
 """
 
-from ACR.utils import replaceVars,prepareVars, str2obj, dicttree
+from ACR.utils import replaceVars, str2obj, dicttree
 from ACR.components import *
 from ACR.utils.xmlextras import tree2xml
 from xml.sax.saxutils import escape,unescape
@@ -72,8 +72,8 @@ class Mongo(Component):
 	def insert(self,acenv,config):
 		D=acenv.doDebug
 		params=config["params"]
-		coll=config["params"]["coll"]
-		o=config["spec"]
+		coll=params["coll"]
+		o=params["spec"]
 		if D: acenv.debug("doing %s",coll.insert)
 		try:
 			id=coll.insert(o,safe=True)
@@ -92,12 +92,15 @@ class Mongo(Component):
 		D=acenv.doDebug
 		if D: acenv.debug("START Mongo.save with: %s", config)
 		params=config["params"]
-		coll=config["params"]["coll"]
-		o=config["spec"]
-		if D: acenv.debug("doing %s",coll.insert)
+		coll=params["coll"]
+		o=params["spec"]
+		# if D: acenv.debug("doing %s",coll.insert)
 		id=coll.save(o,safe=True)
 		if D:acenv.debug("saved:\n%s",o)
-		ret={"@id":id}
+		ret={
+			"@status":"ok",
+			"@id":id
+		}
 		#leaving space for debugging and profiling info
 		return ret
 
@@ -105,8 +108,8 @@ class Mongo(Component):
 		D=acenv.doDebug
 		if D: acenv.debug("START Mongo.remove with: %s", config)
 		params=config["params"]
-		coll=config["params"]["coll"]
-		o=config["spec"]
+		coll=params["coll"]
+		o=params["spec"]
 		if D: acenv.debug("doing %s",coll.insert)
 		if o:
 			lastError=coll.remove(o,safe=True)
@@ -265,11 +268,11 @@ class Mongo(Component):
 		except KeyError:
 			pass
 		try:
+			# TODO bring back support for sub-collections - .split(".")
 			coll=makeTree(pars["coll"])#.split(".")
-
 			pars["coll"]=coll
 		except KeyError:
-			if config["command"] !="getColls":
+			if config["command"]!="getColls":
 				raise Error("no coll parameter specified")
 		try:
 			sort=pars["sort"].split(",")

@@ -21,6 +21,7 @@ from ACR.errors import *
 from ACR.utils import prepareVars, replaceVars
 from ACR.utils.xmlextras import tree2xml
 from ACR.utils import generator
+from ACR.utils.interpreter import makeTree
 import os
 import shutil
 import fnmatch
@@ -31,6 +32,7 @@ class FileSystem(Component):
 	SHOW_HIDDEN=False
 	SHOW_MIME=False
 	ONLY_DIRS=False
+
 	def __init__(self,config):
 		#self.config=config
 		#TODO check whether it is path to proper directory (exists, permissions etc) or not
@@ -66,27 +68,28 @@ class FileSystem(Component):
 		if showDirs:
 			dirs=filter(lambda dir: dir not in files,all)
 		ret=[]
-		if len(files)==0:
+		if len(files)+len(dirs)==0:
 			return {
 				"@status":"error",
-				"@error":"DirEmpty"
+				"@error":"FolderEmpty",
+				"@message":"Folder %s is empty"%fullPath
 			}
 		path=conf["path"]
 		if dirs:
 			for i in dirs:
 				if not i== "lost+found":
 					ret.append({
-						"@name":i,
-						"@path":path,
-						"@type":"dir"
+						"name":i,
+						"path":path.replace("/","|"),
+						"type":"folder"
 					})
 		if files and not onlyDirs:
 			for i in files:
 				#TODO change type to mimetype
 				f={
-					"@name":i,
-					"@path":path,
-					"@type":"file"
+					"name":i,
+					"path":path,
+					"type":"file"
 				}
 				if showMIME:
 					try:
@@ -98,11 +101,11 @@ class FileSystem(Component):
 							ext=extMap[ext]
 						except:
 							pass
-						f['@type']=mimetypes.types_map['.'+ext].replace("/","-")
-						if f['@type'].startswith("image"):
-							f["@type"]="image-x-generic"
+						f['type']=mimetypes.types_map['.'+ext].replace("/","-")
+						if f['type'].startswith("image"):
+							f["type"]="image-x-generic"
 					except:
-						f["@type"]="unknown"
+						f["type"]="unknown"
 				ret.append(f)
 		return ret
 
@@ -217,7 +220,8 @@ class FileSystem(Component):
 		c=config["params"]
 		conf={}
 		for i in c:
-			conf[i]=replaceVars(acenv, c[i], lambda x: type(x) is generator and x or str(x))
+			conf[i]=c[i].execute(acenv)
+			# conf[i]=replaceVars(acenv, c[i], lambda x: type(x) is generator and x or str(x))
 		if D:
 			if not conf.get("path"):
 				acenv.error("path not suplied")
@@ -245,7 +249,9 @@ class FileSystem(Component):
 				elif type(elem) is str:
 					s.append(elem)
 			ret["content"]=prepareVars("\n".join(s))
-		ret["params"]=conf["params"]
+		ret["params"]={}
+		for i in conf["params"]:
+			ret["params"][i]=makeTree(conf["params"][i])
 		return ret
 
 def getObject(config):
