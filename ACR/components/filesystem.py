@@ -54,7 +54,8 @@ class FileSystem(Component):
 		except OSError,e:
 			return {
 				"@status":"error",
-				"@error":e
+				"@error":str(e.__class__.__name__),
+				"@message":str(e)
 			}
 		all.sort()
 		if _filter:
@@ -140,7 +141,8 @@ class FileSystem(Component):
 			#File.close()
 			return {
 				"@status":"error",
-				"@error":e
+				"@error":str(e.__class__.__name__),
+				"@message":str(e)
 			}
 		else:
 			File.close()
@@ -156,7 +158,11 @@ class FileSystem(Component):
 			file=open(path, 'a')
 			file.write(conf['content'])#.replace("\r\n","\n")
 		except IOError,e:
-			raise Error("IOError", 'cannot open %s'%(e))
+			return {
+				"@status":"error",
+				"@error":str(e.__class__.__name__),
+				"@message":str(e)
+			}
 		else:
 			file.close()
 		return {"@status":"ok"}
@@ -197,20 +203,18 @@ class FileSystem(Component):
 		except IOError,e:
 			return {
 				"@status":"error",
-				"@error":e
+				"@error":str(e.__class__.__name__),
+				"@message":str(e)
 			}
 			#print 'cannot open', conf["path"]
 		else:
 			file.close()
 		return {
 			"content":content,
-			"fileName":conf["path"].split("/")[-1]
+			"name":conf["path"].split("/")[-1],
+			"path":conf["path"].replace("/","|"),
+			"ext":conf["path"].split(".")[-1]
 		}
-		#{
-#			"content":"".join(["<![CDATA[",
-#			content
-#			.replace("]]>","]]>]]&gt;<![CDATA["),"]]>"])
-#		}
 
 	def generate(self, acenv, config):
 		D=acenv.doDebug
