@@ -251,6 +251,7 @@ class Mongo(Component):
 			if type(elem) is tuple:
 				if elem[0]=="where":
 					pars["where"]=makeTree("".join(elem[2]))
+				#deprecated
 				elif elem[0]=="field":
 					fields[elem[1]["name"]]=bool(str2obj(elem[1]["show"]))
 				else:

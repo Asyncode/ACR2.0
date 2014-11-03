@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ACR.components import *
-from ACR.utils import replaceVars,generateID
+from ACR.utils import generateID
 from ACR.utils.interpreter import makeTree
 from ACR import acconfig
 from ACR.errors import Error
@@ -51,7 +51,7 @@ class User(Component):
 
 	def login(self,acenv,conf):
 		D=acenv.doDebug
-		email=replaceVars(acenv,conf["email"]).lower()
+		email=conf["email"].execute(acenv).lower()
 		usersColl=acenv.app.storage.users
 
 		try:
@@ -68,7 +68,7 @@ class User(Component):
 				"@status":"error",
 				"@error":"AccountNotFound"
 			}
-		password=replaceVars(acenv,conf["password"])
+		password=conf["password"].execute(acenv)
 		if user['password']==md5_constructor(password).hexdigest():
 			if D: acenv.info("Password is correct")
 			if not acenv.sessionStorage:
@@ -95,7 +95,7 @@ class User(Component):
 
 	def register(self,acenv,conf):
 		usersColl=acenv.app.storage.users
-		email=replaceVars(acenv,conf["email"]).lower()
+		email=conf["email"].execute(acenv).lower()
 		if not (len(email)>5 and self.EMAIL_RE.match(email)):
 			return {
 				"@status":"error",
@@ -111,8 +111,8 @@ class User(Component):
 		key=generateID()
 		d={
 			"email":email,
-			"password":md5_constructor(replaceVars(acenv,conf["password"])).hexdigest(),
-			"role":replaceVars(acenv,conf.get("role",self.ROLE)),
+			"password":md5_constructor(conf["password"].execute(acenv)).hexdigest(),
+			"role":conf.get("role") and conf["role"].execute(acenv) or self.ROLE,
 			"approvalKey":key,
 			"privileges":[]
 		}
@@ -133,9 +133,10 @@ class User(Component):
 			raise Error("Bad command %s",config["command"])
 		if config["command"] in ["register","login"] and not ("email" in config["params"].keys() or  "password" in config["params"].keys()):
 			raise Error("Email or password is not set in %s action."%(config["command"]))
-		ret=config["params"].copy()
-		if ret.has_key("data"):
-			ret["data"]=makeTree(ret["data"])
+
+		ret={}
+		for i in config["params"]:
+			ret[i]=makeTree(config["params"][i])
 		ret["command"]=config["command"]
 		return ret
 
