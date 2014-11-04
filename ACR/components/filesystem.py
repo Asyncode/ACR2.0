@@ -234,16 +234,14 @@ class FileSystem(Component):
 		conf={}
 		for i in c:
 			conf[i]=c[i].execute(acenv)
-			# conf[i]=replaceVars(acenv, c[i], lambda x: type(x) is generator and x or str(x))
 		if D:
 			if not conf.get("path"):
 				acenv.error("path not suplied")
 			elif conf["path"][0]!='/':
 				acenv.error("missning '/' character at the begginig of 'path' attribute")
 		conf["path"]=fixPath(conf["path"])
-		print conf["path"]
 		try:
-			if type(conf["content"]) is not generator:
+			if type(config["content"]) is not generator:
 				conf["content"]=replaceVars(acenv,config["content"])
 		except:
 			pass
@@ -256,7 +254,7 @@ class FileSystem(Component):
 		ret={
 			"command":conf["command"]
 		}
-		if conf["content"]:
+		if conf.get("content",False):
 			s=[]
 			for elem in conf["content"]:
 				if type(elem) is tuple:
