@@ -32,9 +32,9 @@ import mimetypes
 def fixPath(p):
 	if p[0] is not "/":
 		p="/"+p
-	if re.match("^[./]*$",p):
+	if re.match("^[\./]*$",p):
 		return ""
-	return re.sub("/[^/]*/..","",p)[1:]
+	return re.sub("/[^/]*/\.\.","",p)[1:]
 
 class FileSystem(Component):
 	SHOW_DIRS=True
@@ -241,6 +241,7 @@ class FileSystem(Component):
 			elif conf["path"][0]!='/':
 				acenv.error("missning '/' character at the begginig of 'path' attribute")
 		conf["path"]=fixPath(conf["path"])
+		print conf["path"]
 		try:
 			if type(conf["content"]) is not generator:
 				conf["content"]=replaceVars(acenv,config["content"])
