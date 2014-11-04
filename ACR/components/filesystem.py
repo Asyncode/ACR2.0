@@ -23,9 +23,18 @@ from ACR.utils.xmlextras import tree2xml
 from ACR.utils import generator
 from ACR.utils.interpreter import makeTree
 import os
+import re
 import shutil
 import fnmatch
 import mimetypes
+
+# doesn't work for /a/b/../../
+def fixPath(p):
+	if p[0] is not "/":
+		p="/"+p
+	if re.match("^[./]*$",p):
+		return ""
+	return re.sub("/[^/]*/..","",p)[1:]
 
 class FileSystem(Component):
 	SHOW_DIRS=True
@@ -231,6 +240,7 @@ class FileSystem(Component):
 				acenv.error("path not suplied")
 			elif conf["path"][0]!='/':
 				acenv.error("missning '/' character at the begginig of 'path' attribute")
+		conf["path"]=fixPath(conf["path"])
 		try:
 			if type(conf["content"]) is not generator:
 				conf["content"]=replaceVars(acenv,config["content"])
