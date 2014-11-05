@@ -811,6 +811,18 @@ class Tree(object):
 					return list(chunks(args[0],args[1]))
 				elif fnName=="split":
 					return args[0].split(*args[1:])
+				elif fnName=="slice":
+					if args and type(args[1]) not in ITER_TYPES:
+						raise ExecutionError("Wrong usage of slice(STRING, ARRAY). Second argument is not an array but %s."%color.bold(type(args[1]).__name__))
+					try:
+						pos=list(args[1])
+						if type(pos[0]) in ITER_TYPES:
+							if D: self.debug("run slice() for a list of slicers")
+							return (args[0][x[0]:x[1]] for x in pos)
+						return args[0][pos[0]:pos[1]]
+					except IndexError:
+						if len(args)!=2:
+							raise ProgrammingError("Wrong usage of slice(STRING, ARRAY). Provided %s argument, should be exactly 2."%len(args))
 				elif fnName=="unescape":
 					global unescape,unescapeDict
 					if not unescape:
