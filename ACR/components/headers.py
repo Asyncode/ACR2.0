@@ -19,6 +19,7 @@
 
 from ACR import acconfig
 from ACR.components import *
+from ACR.components.interpreter import makeTree
 from ACR.errors import *
 from ACR.utils import HTTP
 
@@ -34,16 +35,18 @@ class Headers(Component):
 	def redirect(self,env,config):
 		if env.doDebug: env.info("Requested redirect to <a href=\"#\">%s</a>"%(replaceVars(env,config["location"])))
 		env.doRedirect=True
-		env.outputHeaders.append(("Location",config["location"].execute(env),fn=str)))
+		env.outputHeaders.append(("Location",config["location"].execute(env)))
 		return {}
 
 	def generate(self,env,config):
 		return self.__getattribute__(config["command"].split(":").pop())(env,config["params"])
 
 	def parseAction(self, conf):
-		ret=[]
+		params={}
 		for i in conf["params"]:
-			ret["params"][i]=makeTree(conf["params"][i])
+			params[i]=makeTree(conf["params"][i])
+		ret=conf
+		ret["params"]=params
 		return ret
 
 def getObject(config):
