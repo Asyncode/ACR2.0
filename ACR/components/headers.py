@@ -20,12 +20,12 @@
 from ACR import acconfig
 from ACR.components import *
 from ACR.errors import *
-from ACR.utils import replaceVars,HTTP
+from ACR.utils import HTTP
 
 class Headers(Component):
 	def setcookie(self,env,config):
 		#if config[1]["action"].lower()=="set":
-		d={"name":replaceVars(env,config["name"],fn=str), "value":replaceVars(env,config["value"])}
+		d={"name":config["name"].execute(env), "value":config["value"].execute(env)}
 		if config.has_key("path"):
 			d["path"]=replaceVars(env,config["path"])
 		HTTP.setCookie(env,d)
@@ -34,11 +34,17 @@ class Headers(Component):
 	def redirect(self,env,config):
 		if env.doDebug: env.info("Requested redirect to <a href=\"#\">%s</a>"%(replaceVars(env,config["location"])))
 		env.doRedirect=True
-		env.outputHeaders.append(("Location",replaceVars(env,config["location"],fn=str)))
+		env.outputHeaders.append(("Location",config["location"].execute(env),fn=str)))
 		return {}
 
 	def generate(self,env,config):
 		return self.__getattribute__(config["command"].split(":").pop())(env,config["params"])
+
+	def parseAction(self, conf):
+		ret=[]
+		for i in conf["params"]:
+			ret["params"][i]=makeTree(conf["params"][i])
+		return ret
 
 def getObject(config):
 	return Headers(config)
