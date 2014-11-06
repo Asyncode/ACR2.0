@@ -34,7 +34,7 @@ def fixPath(p):
 		p="/"+p
 	if re.match("^[\./]*$",p):
 		return ""
-	return re.sub("/[^/]*/\.\.","",p)[1:]
+	return re.sub("/[^/]*/?\.\.","",p)[1:]
 
 class FileSystem(Component):
 	SHOW_DIRS=True
