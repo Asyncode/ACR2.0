@@ -154,7 +154,7 @@ class FileSystem(Component):
 				"@message":str(e)
 			}
 		else:
-			File.close()
+			f.close()
 		return {"@status":"ok"}
 
 	def update(self,acenv,conf):

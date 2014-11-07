@@ -26,6 +26,7 @@ from ACR import acconfig
 from ACR.utils.xmlextras import xml2tree
 
 mimetypes.types_map['.json']='application/json'
+mimetypes.types_map['.woff']='application/x-font-woff'
 
 def r(s):
 	raise Exception(s)
@@ -77,6 +78,6 @@ def standalone_server(env,start_response):
 	except:
 		pass
 	else:
-		if extension=="ico" or (len(extension)<5 and mimetypes.types_map.get('.'+extension,"ERROR") !='ERROR'):
+		if extension in ["ico","woff"] or (len(extension)<5 and mimetypes.types_map.get('.'+extension,"ERROR") !='ERROR'):
 			return serve_static(env,start_response)
 	return application(env, start_response)
