@@ -46,7 +46,7 @@ class FileSystem(Component):
 		#self.config=config
 		#TODO check whether it is path to proper directory (exists, permissions etc) or not
 		try:
-			self.abspath=config[0][2][0]
+			self.abspath=os.path.expanduser(config[0][2][0])
 		except:
 			raise Error("MisconfigurationError", "FileSystem component could not find the proper configuration.")
 
@@ -139,13 +139,13 @@ class FileSystem(Component):
 			if not os.path.isdir(currPath):
 				os.mkdir(currPath)
 		try:
-			File=open(conf["fullPath"], 'w')
+			f=open(conf["fullPath"], 'w')
 			content=conf["content"]
 			if type(content) in (str,unicode):
-				File.write(content)
+				f.write(content)
 			elif type(content) is generator:
 				for i in content:
-					File.write(i)
+					f.write(i)
 		except (IOError,OSError) ,e:
 			#File.close()
 			return {
