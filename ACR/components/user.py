@@ -22,7 +22,7 @@ from ACR.utils import generateID
 from ACR.utils.interpreter import makeTree
 from ACR import acconfig
 from ACR.errors import Error
-from ACR.utils.hashcompat import md5_constructor
+from hashlib import sha224
 from ACR.session.mongoSession import MongoSession
 import re
 
@@ -36,7 +36,7 @@ import re
 
 --- Possible extensions ---
 
-	- handling md5 passwords directly from UA instead of hashing it here,
+	- handling sha2 passwords directly from UA instead of hashing it here,
 	- login via OpenID
 	- OAuth
 """
@@ -69,7 +69,7 @@ class User(Component):
 				"@error":"AccountNotFound"
 			}
 		password=conf["password"].execute(acenv)
-		if user['password']==md5_constructor(password).hexdigest():
+		if user['password']==sha224(password).hexdigest():
 			if D: acenv.info("Password is correct")
 			if not acenv.sessionStorage:
 				acenv.sessionStorage=MongoSession(acenv)
@@ -111,7 +111,7 @@ class User(Component):
 		key=generateID()
 		d={
 			"email":email,
-			"password":md5_constructor(conf["password"].execute(acenv)).hexdigest(),
+			"password":sha224(conf["password"].execute(acenv)).hexdigest(),
 			"role":conf.get("role") and conf["role"].execute(acenv) or self.ROLE,
 			"approvalKey":key,
 			"privileges":[]

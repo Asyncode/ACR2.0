@@ -59,6 +59,7 @@ class Mongo(Component):
 		if D:
 			acenv.debug("where clause is %s",where)
 			acenv.debug("update object is %s",o)
+		print type(where),where
 		try:
 			# multi=True throws
 			return coll.update(where, o, safe=True, multi=replace)
@@ -228,10 +229,13 @@ class Mongo(Component):
 			pass
 		try:
 			where=params["where"].execute(acenv)
-			where["_id"]=objectid.ObjectId(where["_id"])
+			try:
+				where["_id"]=objectid.ObjectId(where["_id"])
+			except (errors.InvalidId, KeyError):
+				# we are dealing with customized or no _id property
+				pass
 			params["where"]=where
-		except (errors.InvalidId, KeyError):
-			# we are dealing with customized or no _id property
+		except:
 			pass
 		spec=config["content"].execute(acenv)
 		try:

@@ -14,19 +14,19 @@
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from ACR.utils import replaceVars,generateID
+from ACR.utils import replaceVars,prepareVars,generateID
 from ACR.components import *
-from ACR.utils.hashcompat import md5_constructor
+from hashlib import sha224
 
 class KeyGenerator(Component):
 	def generate(self,env,conf):
 		#D=env.doDebug
 		command=conf["command"]
-		if command=="md5":
-			value=replaceVars(env,conf["params"]["value"])
-			return md5_constructor(value).hexdigest()
+		if command=="sha2":
+			value=replaceVars(env,prepareVars(conf["params"]["value"]))
+			return sha224(value).hexdigest()
 		return generateID()
 
 def getObject(config):

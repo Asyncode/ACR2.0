@@ -19,6 +19,7 @@
 
 from ACR.utils import mail,replaceVars,prepareVars,dicttree
 from ACR.components import Component
+from ACR.components.interpreter import makeTree
 from ACR.errors import *
 
 class Email(Component):
@@ -29,7 +30,7 @@ class Email(Component):
 		headers={}
 		params=conf["params"]
 		for h in params:
-			headers[h]=replaceVars(acenv,params[h])
+			headers[h]=params[h].execute(acenv)
 			if type(headers[h]) is list:
 				headers[h]=", ".join(headers[h])
 		if D:acenv.debug("Computed headers: %s",headers)
@@ -45,6 +46,7 @@ class Email(Component):
 		return {"@status":"ok"}
 
 	def parseAction(self,conf):
+		ret={"params":{}}
 		try:
 			conf["params"]["From"]
 		except KeyError:
@@ -57,15 +59,17 @@ class Email(Component):
 			conf["params"]["Subject"]
 		except KeyError:
 			raise Error("SubjectNotSpecified", "'Subject' should be specified")
-		params=conf["params"]
-		for i in params:
-			if params[i]:
-				params[i]=prepareVars(params[i])
+		# params=conf["params"]
+		# for i in params:
+		# 	if params[i]:
+		# 		params[i]=prepareVars(params[i])
+		for i in conf["params"]:
+			ret["params"][i]=makeTree(conf["params"][i])
 		try:
-			conf['content']=prepareVars("".join(conf['content']))
+			ret['content']=prepareVars("".join(conf['content']))
 		except:
 			raise Error("StringExpected", "Please use CDATA mail content.")
-		return conf
+		return ret
 
 def getObject(config):
 	return Email(config)

@@ -10,7 +10,7 @@ available.
 try:
     import hashlib
     md5_constructor = hashlib.md5
-    sha_constructor = hashlib.sha1
+    sha_constructor = hashlib.sha224
 except ImportError:
     import md5
     md5_constructor = md5.new

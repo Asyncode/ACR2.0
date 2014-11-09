@@ -81,7 +81,7 @@ class FileSystem(Component):
 		if len(files)+len(dirs)==0:
 			return {
 				"@status":"error",
-				"@error":"FolderEmpty",
+				"@error":"EmptyFolder",
 				"@message":"Folder %s is empty"%fullPath
 			}
 		path=conf["path"]

@@ -20,8 +20,8 @@ if hasattr(random, 'SystemRandom'):
 else:
 	randrange=random.randrange
 
-RE_PATH=re.compile("{\$([^}]+)}") # {$ foobar}
-RE_PATH_split=re.compile("{\$[^}]+}") # {$ foobar}
+# RE_PATH=re.compile("{\$([^}]+)}") # {$ foobar}
+# RE_PATH_split=re.compile("{\$[^}]+}") # {$ foobar}
 RE_PATH_Mustashes=re.compile("{{(.+?)}}") # {{OPexpr}
 RE_PATH_Mustashes_split=re.compile("{{.+?}}") # {{OPexpr}}
 
@@ -79,18 +79,6 @@ def replaceVars(env,l,fn=None):
 	for i in l:
 		if type(i) is interpreter.Tree:
 			ret.append(str(i.execute(env)))
-		elif type(i) is tuple:
-			if D: env.debug("computing '%s'",i)
-			storage=getStorage(env,i[0])
-			v=py2JSON(dicttree.get(storage,i[1],acenv=env))
-			if v in ("null","false"):
-				continue
-			if fn is not None:
-				if type(v) is unicode:
-					v=v.encode("utf8")
-				v=fn(v)
-			if D: env.debug("adding '%s' to the end of string",v)
-			ret.append(v)
 		else:
 			if D: env.debug("adding '%s' to the end of string",i)
 			if fn is not None:
@@ -111,31 +99,15 @@ def replaceVars(env,l,fn=None):
 def prepareVars(s):
 	if type(s) is not str:
 		return s
-	splitted=RE_PATH_split.split(s)
-	variables=RE_PATH.findall(s)
-	#print "splitted",splitted
-	#print "variables",variables
+	splitted=RE_PATH_Mustashes_split.split(s)
+	variables=RE_PATH_Mustashes.findall(s)
+	# print "splitted",splitted
+	# print "variables",variables
 	ret=[]
-	STORAGES=["rs","ss","env","config"]
 	try:
 		while True:
-			string=splitted.pop(0)
-			splittedM=RE_PATH_Mustashes_split.split(string)
-			variablesM=RE_PATH_Mustashes.findall(string)
-			#print "splittedM",splittedM
-			#print "variablesM",variablesM
-			try:
-				while True:
-					ret.append(splittedM.pop(0))
-					ret.append(interpreter.makeTree(variablesM.pop(0)))
-			except IndexError:
-				pass
-			var=variables.pop(0)
-			path=var.split(".")
-			storageName=path.pop(0) or "rs"
-			if storageName not in STORAGES:
-				raise Exception("Wrong storage name in $%s. Should it be $.%s?"%(var,var))
-			ret.append((storageName,path))
+			ret.append(splitted.pop(0))
+			ret.append(interpreter.makeTree(variablesM.pop(0)))
 	except IndexError:
 		pass
 	if ret[0]=="":

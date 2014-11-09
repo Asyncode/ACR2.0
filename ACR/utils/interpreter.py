@@ -388,6 +388,8 @@ def makeTree(expr):
 	if type(expr) is not str:
 		return Tree(expr)
 	expr=expr.strip()
+	if expr.startswith("{{"):
+		expr=expr[2:-2]
 	if not len(expr):
 		return Tree(True)
 	global token, next
