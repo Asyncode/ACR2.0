@@ -107,7 +107,7 @@ def prepareVars(s):
 	try:
 		while True:
 			ret.append(splitted.pop(0))
-			ret.append(interpreter.makeTree(variablesM.pop(0)))
+			ret.append(interpreter.makeTree(variables.pop(0)))
 	except IndexError:
 		pass
 	if ret[0]=="":
