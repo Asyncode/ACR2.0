@@ -168,6 +168,7 @@ class Mongo(Component):
 			except: pass
 
 		if P: t=time.time()
+		print p
 		if count:
 			ret=coll.find(**p).count()
 			if D:acenv.debug("Matching documents number: %s",ret)
@@ -223,13 +224,14 @@ class Mongo(Component):
 		db=acenv.app.storage
 		cfg=config.copy()
 		params=cfg["params"].copy()
+		for i in params:
+			params[i]=params[i].execute(acenv)
 		try:
-			collName=params["coll"].execute(acenv)
-			params["coll"]=acenv.app.storage[collName]
+			params["coll"]=acenv.app.storage[params["coll"]]
 		except KeyError:
 			pass
 		try:
-			where=params["where"].execute(acenv)
+			# where=params["where"].execute(acenv)
 			try:
 				where["_id"]=objectid.ObjectId(where["_id"])
 			except (errors.InvalidId, KeyError):
@@ -263,26 +265,28 @@ class Mongo(Component):
 					pars[elem[0]]=(elem[1],elem[2])
 			elif type(elem) is str:
 				s.append(elem.strip())
+		for i in pars:
+			pars[i]=makeTree(pars[i])
+		# try:
+		# 	show=pars["show"].split(",")
+		# 	pars["fields"]=dict(map(lambda x: (x.strip(), 1), show))
+		# except KeyError:
+		# 	pass
+		# try:
+		# 	hide=pars["hide"].split(",")
+		# 	pars["fields"]=dict(map(lambda x: (x.strip(), 0), hide))
+		# except KeyError:
+		# 	pass
+		# try:
+		# 	# TODO bring back support for sub-collections - .split(".")
+		# 	coll=makeTree(pars["coll"])#.split(".")
+		# 	pars["coll"]=coll
+		# except KeyError:
+		# if config["command"]!="getColls":
+		# 	raise Error("no coll parameter specified")
 		try:
-			show=pars["show"].split(",")
-			pars["fields"]=dict(map(lambda x: (x.strip(), 1), show))
-		except KeyError:
-			pass
-		try:
-			hide=pars["hide"].split(",")
-			pars["fields"]=dict(map(lambda x: (x.strip(), 0), hide))
-		except KeyError:
-			pass
-		try:
-			# TODO bring back support for sub-collections - .split(".")
-			coll=makeTree(pars["coll"])#.split(".")
-			pars["coll"]=coll
-		except KeyError:
-			if config["command"]!="getColls":
-				raise Error("no coll parameter specified")
-		try:
-			sort=pars["sort"].split(",")
-			directions=pars.get("direction",self.DIRECTION).split(",")
+			sort=pars["sort"]#.split(",")
+			directions=pars.get("direction",self.DIRECTION)#.split(",")
 			directions=map(lambda x: pymongo.__dict__.get(x.upper()),directions)
 			if len(directions)>=len(sort):
 				pars["sort"]=zip(sort,directions)
