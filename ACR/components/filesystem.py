@@ -252,7 +252,8 @@ class FileSystem(Component):
 		if conf["command"] not in ("list", "create", "update", "append", "delete", "copy", "move", "exists", "get"):
 			raise Error("Command '%s' do not exist!", config["command"])
 		ret={
-			"command":conf["command"]
+			"command":conf["command"],
+			"content":""
 		}
 		if conf.get("content",False):
 			s=[]

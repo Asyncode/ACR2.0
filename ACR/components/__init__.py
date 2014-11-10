@@ -33,10 +33,10 @@ def get(name):
 		return module
 	path="ACR.components."+name
 	#TODO error handling
-	#try:
-	__import__(path)
-	#except Error,e:
-	#	raise Error("ComponentNotFound",str(e))
+	try:
+		__import__(path)
+	except ImportError,e:
+		raise Error("ComponentNotFound",str(e))
 	m=sys.modules[path]
 	MODULE_CACHE[name]=m
 	return m

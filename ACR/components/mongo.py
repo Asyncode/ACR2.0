@@ -214,7 +214,8 @@ class Mongo(Component):
 			return ret
 
 	def getColls(self, acenv, config):
-		return acenv.app.storage.collection_names()
+		colls=acenv.app.storage.collection_names()#.remove("system.indexes")
+		return sorted(colls)
 
 	def generate(self, acenv, config):
 		D=acenv.doDebug

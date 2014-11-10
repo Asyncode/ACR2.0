@@ -201,8 +201,8 @@ def led(self, left):
 	if token.id is "@":
 		attr=True
 		advance()
-	if token.id not in ["(name)","*" ]:
-		raise SyntaxError("Expected an attribute name.")
+	# if token.id not in ["(name)","*" ]:
+	# 	raise SyntaxError("Expected an attribute name.")
 	self.fst=left
 	if attr:
 		token.value="@"+token.value
