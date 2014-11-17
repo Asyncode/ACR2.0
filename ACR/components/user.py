@@ -29,10 +29,10 @@ import re
 """
 	Users are stored in the Mongo:
 	- email is required for now and acts as unique key until other login types will be implemented (uniquenes is handled here because Mongo does not support null - null is a value so only one object without email can exist),
-	- password is md5 of password; currently passing md5 string directly from UA is not supported
+	- password is sha2 of password; currently passing sha5 string directly from UA is not supported
 	- role is for handling simple role-based privilege system,
 	- privileges is a list of names of privileges granted to user,
-	- approval_key is key that user need to authorize his e-mail address (anty-spamm strategy and ensuring that user owns address)
+	- approvalKey is key that user need to authorize his e-mail address (anty-spamm strategy and ensuring that user owns address)
 
 --- Possible extensions ---
 
@@ -48,12 +48,10 @@ class User(Component):
 	MAIN=False
 	EMAIL_RE=re.compile("^[a-zA-Z0-9._%-]+@[a-zA-Z0-9._%-]+.[a-zA-Z]{2,6}$")
 
-
 	def login(self,acenv,conf):
 		D=acenv.doDebug
 		email=conf["email"].execute(acenv).lower()
 		usersColl=acenv.app.storage.users
-
 		try:
 			user=list(usersColl.find({
 				"email":email,
@@ -68,6 +66,13 @@ class User(Component):
 				"@status":"error",
 				"@error":"AccountNotFound"
 			}
+		if "approvalKey" in user:
+			return {
+				"@status":"error",
+				"@error":"EmailAddressNotVerified",
+				"@message":"Email address is not verified."
+			}
+
 		password=conf["password"].execute(acenv)
 		if user['password']==sha224(password).hexdigest():
 			if D: acenv.info("Password is correct")
@@ -77,13 +82,23 @@ class User(Component):
 			user["ID"]=str(user.pop("_id"))
 			user["loggedIn"]=True
 			acenv.sessionStorage.data=user
-			#print "login sess data ",acenv.sessionStorage.data
 			return {"@status":"ok"}
 		else:
 			if D: acenv.error("Password is not correct")
 			return {
 				"@status":"error",
 				"@error":"WrongPassword"
+			}
+
+	def approveEmail(self,acenv,conf):
+		usersColl=acenv.app.storage.users
+		if usersColl.update({"approvalKey":conf["key"].execute(acenv)},{"$unset":{"approvalKey":""}}, safe=True)["n"]>=1:
+			return {"@status":"ok"}
+		else:
+			return {
+				"@status":"error",
+				"@error":"EmailAlreadyApproved",
+				"@message":"Email address is already approved."
 			}
 
 	def logout(self,acenv,conf):
@@ -121,15 +136,15 @@ class User(Component):
 		id=usersColl.save(d,safe=True)
 		return {
 			"@status":"ok",
-			"@id":id,
-			"@approvalKey":key
+			"ID":str(id),
+			"approvalKey":key
 		}
 
 	def generate(self,acenv,conf):
 		return self.__getattribute__(conf["command"].split(":").pop())(acenv,conf)
 
 	def parseAction(self,config):
-		if config["command"] not in ["register","logout","login"]:
+		if config["command"] not in ["register","logout","login","approveEmail"]:
 			raise Error("Bad command %s",config["command"])
 		if config["command"] in ["register","login"] and not ("email" in config["params"].keys() or  "password" in config["params"].keys()):
 			raise Error("Email or password is not set in %s action."%(config["command"]))

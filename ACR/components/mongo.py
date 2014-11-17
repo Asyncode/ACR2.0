@@ -168,7 +168,6 @@ class Mongo(Component):
 			except: pass
 
 		if P: t=time.time()
-		print p
 		if count:
 			ret=coll.find(**p).count()
 			if D:acenv.debug("Matching documents number: %s",ret)
