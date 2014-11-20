@@ -228,7 +228,7 @@ class Application(object):
 			"name":self.appName,
 		}
 		try:
-			acenv.generations["_app"]={"view":view.name.replace(".","/")}
+			acenv.generations["_app"]["view"]=view.name.replace(".","/")
 		except:
 			pass
 		if acenv.sessionStorage:
