@@ -222,9 +222,13 @@ class Application(object):
 			return serializers.get(acconfig.MIMEmapper.get("json")).serialize(acenv)
 
 		acenv.generations["_session"]["lang"]={"current":acenv.lang,"available":acenv.langs}
-		acenv.generations["_session"]["appDetails"]={"domain":acenv.domain,"config":acenv.outputConfig}
+		acenv.generations["_app"]={
+			"domain":acenv.domain,
+			# "config":acenv.outputConfig,
+			"name":self.appName,
+		}
 		try:
-			acenv.generations["_session"]["view"]={"path":view.name.replace(".","/")}
+			acenv.generations["_app"]={"view":view.name.replace(".","/")}
 		except:
 			pass
 		if acenv.sessionStorage:
